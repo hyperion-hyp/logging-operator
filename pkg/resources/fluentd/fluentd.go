@@ -331,6 +331,13 @@ func (r *Reconciler) reconcileDrain(ctx context.Context) (*reconcile.Result, err
 				cr.Combine(res, errors.WrapIfWithDetails(err, "removing placeholder pod for pvc", "pvc", pvc.Name))
 				continue
 			}
+
+			if r.Logging.Spec.FluentdSpec.Scaling.Drain.DeleteVolume {
+				if err := client.IgnoreNotFound(r.Client.Delete(ctx, &pvc, client.PropagationPolicy(v1.DeletePropagationBackground))); err != nil {
+					cr.CombineErr(errors.WrapIf(err, "deleting the drained PVC"))
+					continue
+				}
+			}
 			continue
 		}
 
